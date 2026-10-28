@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CauseKey {
+  market
+  cash
+  cost
+  product
+  compete
+  timing
+  fraud
+  scale
+  legal
+  focus
+  growth
+  model
+
+  @@map("cause_key")
+}
+
+model Startup {
+  id             String   @id
+  name           String
+  what           String
+  sector         String
+  country        String
+  hq             String
+  founded        Int?
+  closedYear     Int      @map("closed_year")
+  closedLabel    String   @map("closed_label")
+  raisedMillions Decimal  @default(0) @map("raised_millions") @db.Decimal(12, 2)
+  status         String
+  founders       String[] @default([])
+  investors      String[] @default([])
+  competitors    String[] @default([])
+  lesson         String
+  wikiQuery      String?  @map("wiki_query")
+  approved       Boolean  @default(false)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  reasons  StartupReason[]
+  timeline StartupTimeline[]
+  sources  StartupSource[]
+  website  String?
+
+  @@map("startups")
+}
+
+model StartupReason {
+  id        Int      @id @default(autoincrement())
+  startupId String   @map("startup_id")
+  cause     CauseKey
+  title     String
+  text      String
+  position  Int      @default(0)
+  startup   Startup  @relation(fields: [startupId], references: [id], onDelete: Cascade)
+
+  @@index([startupId])
+  @@map("startup_reasons")
+}
+
+model StartupTimeline {
+  id        Int     @id @default(autoincrement())
+  startupId String  @map("startup_id")
+  whenLabel String  @map("when_label")
+  text      String
+  position  Int     @default(0)
+  startup   Startup @relation(fields: [startupId], references: [id], onDelete: Cascade)
+
+  @@index([startupId])
+  @@map("startup_timeline")
+}
+
+model StartupSource {
+  id        Int     @id @default(autoincrement())
+  startupId String  @map("startup_id")
+  title     String
+  url       String
+  startup   Startup @relation(fields: [startupId], references: [id], onDelete: Cascade)
+
+  @@index([startupId])
+  @@map("startup_sources")
+}
+
+model FeedItem {
+  id          String     @id
+  date        DateTime?  @db.Date
+  month       String?    @db.VarChar(7)
+  whenLabel   String?    @map("when_label")
+  name        String
+  country     String?
+  raised      String
+  causes      CauseKey[] @default([])
+  why         String
+  sourceTitle String     @map("source_title")
+  sourceUrl   String     @map("source_url")
+  approved    Boolean    @default(false)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([approved, date])
+  @@index([approved, month])
+  @@map("feed_items")
+}
