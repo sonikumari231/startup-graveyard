@@ -95,6 +95,50 @@ Recent shutdowns found in news reports (the "Daily feed" tab).
 ]
 ```
 
+## `POST /api/feed`
+
+Publish a verified company shutdown directly to the Daily Feed. This endpoint adds the record
+to the database as approved, so protect the admin key and call it from Postman or a trusted
+server only. Set `FEED_ADMIN_KEY` in `server/.env` and send it as `x-feed-admin-key`.
+
+```json
+{
+  "date": "2026-03-31",
+  "name": "Yupp",
+  "country": "United States",
+  "raised": "$33M",
+  "causes": ["market", "product"],
+  "why": "The company announced it was closing after failing to reach strong enough product-market fit.",
+  "sourceTitle": "TechCrunch",
+  "sourceUrl": "https://example.com/source"
+}
+```
+
+`date` (`YYYY-MM-DD`) or `month` (`YYYY-MM`) is required. `id` is optional; the server generates
+one when omitted. Valid `causes` are the cause keys listed above. Success returns status `201`
+with the published item. `GET /api/feed` returns it immediately.
+
+## `GET /api/feed/recent-reports`
+
+Live news search for recent startup shutdown reports. Results are article headlines and source
+links for review; they are not automatically added to the approved company catalog.
+
+```json
+{
+  "reports": [
+    {
+      "id": "https://publisher.example/story",
+      "title": "Startup announces it is closing",
+      "url": "https://publisher.example/story",
+      "source": "publisher.example",
+      "date": "2026-10-29",
+      "country": "US"
+    }
+  ],
+  "updatedAt": "2026-10-29T12:00:00.000Z"
+}
+```
+
 ---
 
 ## `POST /api/chat` (Ask AI tab)

@@ -51,6 +51,16 @@ export interface FeedItem {
   sourceUrl: string;
 }
 
+/** A recent news article matching the live startup-shutdown search. */
+export interface RecentShutdownReport {
+  id: string;
+  title: string;
+  url: string;
+  source: string;
+  date: string | null;
+  country: string | null;
+}
+
 /** A startup plus values the UI works out itself. */
 export interface Case extends Startup {
   life: number;

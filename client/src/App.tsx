@@ -9,7 +9,6 @@ import { useData, useSavedSet } from "./hooks";
 import { enrich, initialFilters, matches, sorters, type Filters } from "./lib/filter";
 import type { ChatMsg } from "./types";
 
-// The 3D scene pulls in three.js, so it loads after the first paint.
 const Hero3D = lazy(() => import("./components/Hero3D"));
 
 type Tab = "library" | "daily" | "insights" | "ask";
@@ -28,6 +27,7 @@ function initialTab(): Tab {
 export default function App() {
   const { startups, feed, live, loading } = useData();
   const cases = useMemo(() => enrich(startups), [startups]);
+  const featuredCase = cases.find((d) => d.id === "quibi") ?? cases[0] ?? null;
 
   const [tab, setTab] = useState<Tab>(initialTab);
   const [f, setFilters] = useState<Filters>(initialFilters);
@@ -41,6 +41,15 @@ export default function App() {
 
   const setF = useCallback((patch: Partial<Filters>) => setFilters((p) => ({ ...p, ...patch })), []);
   const resetAll = useCallback(() => setFilters(initialFilters), []);
+
+  const focusSearch = useCallback(() => {
+    setTab("library");
+    window.requestAnimationFrame(() => document.getElementById("qtop")?.focus());
+  }, []);
+  const exploreArchive = useCallback(() => {
+    setTab("library");
+    window.requestAnimationFrame(() => document.getElementById("archive")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }, []);
 
   const toast = useCallback((msg: string) => {
     setToastMsg(msg);
@@ -72,6 +81,46 @@ export default function App() {
 
   useEffect(() => { document.body.classList.toggle("has-bar", compare.length > 0); }, [compare.length]);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const typing = target && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
+      if (event.key === "/" && !typing && !event.metaKey && !event.ctrlKey && !event.altKey) {
+        event.preventDefault();
+        focusSearch();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [focusSearch]);
+
+  const closedYears = cases.map((d) => d.closedYear);
+  const yearSpan = closedYears.length
+    ? `${Math.min(...closedYears)} — ${Math.max(...closedYears)}`
+    : "—";
+  const comparePatterns = () => {
+    if (cases.length < 2) return;
+
+    const selected = [featuredCase ?? cases[0]];
+    while (selected.length < Math.min(3, cases.length)) {
+      const remaining = cases.filter((candidate) => !selected.some((item) => item.id === candidate.id));
+      const next = remaining.sort((a, b) => {
+        const score = (candidate: typeof a) => {
+          const newCauses = candidate.causes.filter((cause) => selected.every((item) => !item.causes.includes(cause))).length;
+          const newSector = selected.some((item) => item.sector === candidate.sector) ? 0 : 1;
+          return newCauses * 3 + newSector * 2;
+        };
+        return score(b) - score(a);
+      })[0];
+      if (!next) break;
+      selected.push(next);
+    }
+
+    setCompare(selected.map((item) => item.id));
+    setOpenId(null);
+    setShowCompare(true);
+  };
+
   return (
     <div className="wrap">
       <div className="topbar">
@@ -89,16 +138,31 @@ export default function App() {
             </button>
           ))}
         </div>
+        <button className="search-launch" type="button" onClick={focusSearch} aria-label="Search the archive">
+          <span aria-hidden="true">⌕</span><span>Search archive</span><kbd>/</kbd>
+        </button>
       </div>
 
       <header className="hero">
-        <div className="sky" aria-hidden="true" />
-        <h1><span>Welcome to</span> <em>Startup Graveyard</em></h1>
-        <Suspense fallback={<div className="scene" aria-hidden="true" />}>
-          <Hero3D />
-        </Suspense>
-        <p className="sub">A place to learn from startups that failed. Open any one to see when it started, when it closed, who built it, and why it ended.</p>
-        <span className="label">{cases.length} case files</span>
+        <div className="hero-copy">
+          <span className="eyebrow"><i /> A field guide to what went wrong</span>
+          <h1>Failure leaves <em>clues.</em></h1>
+          <p className="sub">Explore the decisions, timing, and market shifts behind startup shutdowns. Learn from the past before you build what comes next.</p>
+          <div className="hero-actions">
+            <button className="btn primary hero-cta" type="button" onClick={exploreArchive}>Explore the archive <span aria-hidden="true">↓</span></button>
+            <button className="btn hero-compare" type="button" onClick={comparePatterns} disabled={cases.length < 2}><span aria-hidden="true">⇄</span> Compare failure patterns</button>
+          </div>
+          <div className="hero-metrics" aria-label="Archive overview">
+            <div><b>{cases.length}</b><span>case files</span></div>
+            <div><b>{new Set(cases.map((d) => d.sector)).size}</b><span>sectors</span></div>
+            <div><b>{yearSpan}</b><span>closure years</span></div>
+          </div>
+        </div>
+        <div className="hero-art">
+          <div className="art-label"><span>THE FAILURE FILES · VOL. 01</span><span className="art-live"><i /> {live ? "LIVE ARCHIVE" : "SAMPLE ARCHIVE"}</span></div>
+          <Suspense fallback={null}><Hero3D /></Suspense>
+          <div className="art-caption"><span>{featuredCase ? `REMEMBERING ${featuredCase.name.toUpperCase()}` : "A LIVING ARCHIVE OF CLOSED STARTUPS"}</span><span>Move your pointer to explore</span></div>
+        </div>
       </header>
 
       {loading ? (
@@ -106,7 +170,13 @@ export default function App() {
       ) : (
         <>
           {tab === "library" && (
-            <Library cases={cases} view={view} f={f} setF={setF} resetAll={resetAll} saved={saved} onSave={save} onOpen={setOpenId} />
+            <div id="archive" className="archive-section">
+              <div className="section-heading">
+                <div><span className="eyebrow"><i /> THE ARCHIVE</span><h2>Stories from the other side.</h2></div>
+                <p>Browse the companies, then open a case file to see the full timeline and lessons.</p>
+              </div>
+              <Library cases={cases} view={view} f={f} setF={setF} resetAll={resetAll} saved={saved} onSave={save} onOpen={setOpenId} />
+            </div>
           )}
           {tab === "daily" && <DailyFeed feed={feed} />}
           {tab === "ask" && <AskAI cases={cases} messages={chat} setMessages={setChat} onOpen={setOpenId} />}

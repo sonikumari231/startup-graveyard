@@ -5,11 +5,13 @@ const express = require("express");
 const prisma = require("./src/db/prisma");
 const startupRouters = require("./src/modules/startups/startups.routes");
 const feedRouters = require("./src/modules/feed/feed.routes");
+const chatRouter = require("./src/modules/chat/chat.routes");
 
 const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(express.json());
+app.use("/api/chat", chatRouter);
 app.use("/api/feed", feedRouters);
 app.use("/api/startups", startupRouters);
 

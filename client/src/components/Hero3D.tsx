@@ -1,16 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { buildScene, VARIANTS, type Built, type Variant } from "./scenes";
-
-const KEY = "sg-scene";
-
-function initialVariant(): Variant {
-  try {
-    const v = localStorage.getItem(KEY) as Variant | null;
-    if (v && VARIANTS.some((x) => x.id === v)) return v;
-  } catch { /* storage unavailable */ }
-  return "house";
-}
+import { buildScene, type Built, type Variant } from "./scenes";
 
 interface Runtime {
   renderer: THREE.WebGLRenderer | null;
@@ -22,7 +12,7 @@ interface Runtime {
   size: () => void;
 }
 
-/** 3D hero. Pick one of several scenes with the buttons under it. Shows nothing if WebGL is unavailable. */
+/** Pointer-responsive floating memorial stones. Shows nothing if WebGL is unavailable. */
 export default function Hero3D() {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -30,7 +20,7 @@ export default function Hero3D() {
     renderer: null, camera: new THREE.PerspectiveCamera(38, 1, 0.1, 80), built: null,
     target: { x: 0, y: 0 }, cur: { x: 0, y: 0 }, draw: () => {}, size: () => {},
   });
-  const [variant, setVariant] = useState<Variant>(initialVariant);
+  const [variant] = useState<Variant>("floating");
   const [failed, setFailed] = useState(false);
   const reduce = useRef(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
@@ -108,7 +98,6 @@ export default function Hero3D() {
     r.built = buildScene(variant);
     prev?.dispose();
     r.draw(0);
-    try { localStorage.setItem(KEY, variant); } catch { /* storage unavailable */ }
     return () => { r.built?.dispose(); r.built = null; };
   }, [variant]);
 
@@ -117,13 +106,6 @@ export default function Hero3D() {
     <>
       <div className="scene" ref={hostRef} aria-hidden="true">
         <canvas ref={canvasRef} />
-      </div>
-      <div className="scene-pick" role="group" aria-label="Choose the 3D scene">
-        {VARIANTS.map((v) => (
-          <button key={v.id} type="button" className="catb sm" aria-pressed={variant === v.id} onClick={() => setVariant(v.id)}>
-            {v.label}
-          </button>
-        ))}
       </div>
     </>
   );

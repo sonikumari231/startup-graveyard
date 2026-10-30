@@ -31,7 +31,7 @@ function tracker() {
 }
 type Track = <T extends Disposable>(x: T) => T;
 
-const AMBER = 0xf0b96b;
+const AMBER = 0xd98a63;
 
 function std(track: Track, color: number, extra: THREE.MeshStandardMaterialParameters = {}) {
   return track(new THREE.MeshStandardMaterial({ color, roughness: 0.9, ...extra }));
@@ -40,7 +40,7 @@ function basic(track: Track, color: number, extra: THREE.MeshBasicMaterialParame
   return track(new THREE.MeshBasicMaterial({ color, ...extra }));
 }
 
-function ground(track: Track, color = 0x151a33) {
+function ground(track: Track, color = 0x18221b) {
   const g = new THREE.Mesh(track(new THREE.CircleGeometry(20, 56)), std(track, color, { roughness: 1 }));
   g.rotation.x = -Math.PI / 2;
   return g;
@@ -98,15 +98,15 @@ function tombstone(track: Track, w: number, h: number, d: number, cross: boolean
 
 function stoneMaterials(track: Track) {
   return {
-    stone: std(track, 0x8086b3, { roughness: 0.85, metalness: 0.05 }),
-    base: std(track, 0x4d5380),
+    stone: std(track, 0x879486, { roughness: 0.85, metalness: 0.05 }),
+    base: std(track, 0x536454),
     gold: std(track, AMBER, { emissive: AMBER, emissiveIntensity: 0.4, roughness: 0.5 }),
   };
 }
 
 function baseLights(scene: THREE.Scene, ambient = 3.1, dir = 3.0) {
-  const amb = new THREE.AmbientLight(0x5a6296, ambient);
-  const moonLight = new THREE.DirectionalLight(0xc4ccff, dir);
+  const amb = new THREE.AmbientLight(0x657461, ambient);
+  const moonLight = new THREE.DirectionalLight(0xd5dbc5, dir);
   moonLight.position.set(-6, 9, 5);
   scene.add(amb, moonLight);
   return { amb, moonLight };
@@ -118,7 +118,7 @@ function baseLights(scene: THREE.Scene, ambient = 3.1, dir = 3.0) {
 function house(): Built {
   const { track, disposeAll } = tracker();
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x0d0f1e, 12, 32);
+  scene.fog = new THREE.Fog(0x111712, 12, 32);
   const world = new THREE.Group();
   scene.add(world);
   world.add(ground(track));
@@ -249,10 +249,10 @@ function house(): Built {
 function floating(): Built {
   const { track, disposeAll } = tracker();
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x0d0f1e, 11, 28);
+  scene.fog = new THREE.Fog(0x111712, 11, 28);
   scene.add(ground(track));
 
-  const orb = new THREE.Mesh(track(new THREE.SphereGeometry(0.62, 32, 32)), basic(track, 0xffe2a8, { fog: false }));
+  const orb = new THREE.Mesh(track(new THREE.SphereGeometry(0.62, 32, 32)), basic(track, 0xf3d8c2, { fog: false }));
   orb.position.set(0, 2.5, 0);
   const halo1 = new THREE.Mesh(track(new THREE.SphereGeometry(1.2, 32, 32)), basic(track, AMBER, { transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
   const halo2 = new THREE.Mesh(track(new THREE.SphereGeometry(2.1, 32, 32)), basic(track, AMBER, { transparent: true, opacity: 0.09, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
@@ -292,7 +292,7 @@ function floating(): Built {
   const embers = makePoints(track, 110, () => {
     const a = Math.random() * 6.28, r = Math.random() * 5.5;
     return [Math.cos(a) * r, Math.random() * 6, Math.sin(a) * r];
-  }, 0xffd58a, 0.07);
+  }, 0xe7a27b, 0.07);
   scene.add(embers.points);
 
   return {
@@ -328,7 +328,7 @@ function floating(): Built {
 function coffin(): Built {
   const { track, disposeAll } = tracker();
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x0d0f1e, 12, 30);
+  scene.fog = new THREE.Fog(0x111712, 12, 30);
   scene.add(ground(track, 0x12162c));
 
   // soft glow behind the coffin
@@ -423,10 +423,10 @@ function coffin(): Built {
 function graveyard(): Built {
   const { track, disposeAll } = tracker();
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x0d0f1e, 10, 26);
+  scene.fog = new THREE.Fog(0x111712, 10, 26);
   const world = new THREE.Group();
   scene.add(world);
-  world.add(ground(track, 0x151a33));
+  world.add(ground(track, 0x18221b));
   const m = stoneMaterials(track);
   const layout: [number, number, number, number, number, number, boolean?][] = [
     [0, 0, 1.7, 2.7, 0, 0, true], [-3.2, -1.2, 1.25, 1.9, 0.14, 0.04], [3.3, -1.0, 1.3, 2.1, -0.12, -0.03],
